@@ -27,7 +27,7 @@ function App() {
   return (
     <div style={{ fontFamily: "Arial", padding: "20px" }}>
       <h1>🎮 Esports News & Scores</h1>
-      <h2>Upcoming Valorant Matches</h2>
+      <h2>Tannu Puddingg</h2>
       <ul>
         {matches.map((match) => (
           <li key={match.id}>
