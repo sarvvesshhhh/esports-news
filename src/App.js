@@ -8,8 +8,8 @@ function App() {
     const fetchMatches = async () => {
       try {
         const response = await fetch(
-          "https://liquipedia.net/api.php?action=parse&page=Liquipedia:Upcoming_and_ongoing_matches&format=json&origin=*"
-        );
+  "https://corsproxy.io/?https://liquipedia.net/api.php?action=parse&page=Liquipedia:Upcoming_and_ongoing_matches&format=json"
+);
         const data = await response.json();
 
         const html = data?.parse?.text?.["*"];
