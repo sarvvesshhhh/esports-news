@@ -7,34 +7,44 @@ function App() {
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const response = await fetch("https://liquipedia.net/api.php?action=parse&page=Portal:Valorant/Tournaments&format=json&origin=*");
+        const response = await fetch(
+          "https://liquipedia.net/api.php?action=parse&page=Liquipedia:Upcoming_and_ongoing_matches&format=json&origin=*"
+        );
         const data = await response.json();
 
-        // Extract plain text from HTML
-        const html = data.parse.text["*"];
+        // Parse the HTML from the response
+        const html = data?.parse?.text?.["*"];
+        if (!html) {
+          setMatches([]);
+          setLoading(false);
+          return;
+        }
+
+        // Convert HTML string into DOM
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
 
-        // Find match rows
-        const matchElements = doc.querySelectorAll(".match-card"); // Liquipedia uses these classes
-        const extractedMatches = [];
+        // Select table rows
+        const rows = doc.querySelectorAll("table.wikitable tr");
+        let valorantMatches = [];
 
-        matchElements.forEach(el => {
-          const teams = el.querySelectorAll(".team");
-          const time = el.querySelector(".timer-object")?.textContent || "TBD";
-
-          if (teams.length >= 2) {
-            extractedMatches.push({
-              team1: teams[0].textContent.trim(),
-              team2: teams[1].textContent.trim(),
-              time: time
-            });
+        rows.forEach((row) => {
+          const cells = row.querySelectorAll("td");
+          if (cells.length > 0) {
+            const game = cells[0].innerText.trim();
+            if (game.toLowerCase().includes("valorant")) {
+              const team1 = cells[1]?.innerText.trim() || "TBD";
+              const team2 = cells[3]?.innerText.trim() || "TBD";
+              const time = cells[4]?.innerText.trim() || "TBD";
+              valorantMatches.push({ game, team1, team2, time });
+            }
           }
         });
 
-        setMatches(extractedMatches);
-      } catch (error) {
-        console.error("Error fetching matches:", error);
+        setMatches(valorantMatches);
+      } catch (err) {
+        console.error("Error fetching Liquipedia matches:", err);
+        setMatches([]);
       } finally {
         setLoading(false);
       }
@@ -44,7 +54,7 @@ function App() {
   }, []);
 
   return (
-    <div className="App">
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
       <h1>🔥 Valorant Matches (Liquipedia)</h1>
       {loading ? (
         <p>Loading...</p>
@@ -54,7 +64,7 @@ function App() {
         <ul>
           {matches.map((match, index) => (
             <li key={index}>
-              {match.team1} 🆚 {match.team2} — {match.time}
+              {match.team1} vs {match.team2} — {match.time}
             </li>
           ))}
         </ul>
