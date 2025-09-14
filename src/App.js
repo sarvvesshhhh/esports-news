@@ -3,32 +3,38 @@ import React, { useEffect, useState } from "react";
 function App() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchMatches = async () => {
       try {
-        const res = await fetch(
-          "https://liquipedia.net/valorant/api.php?action=parse&page=Portal:Tournaments&format=json&origin=*"
-        );
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
+        const response = await fetch("https://liquipedia.net/api.php?action=parse&page=Portal:Valorant/Tournaments&format=json&origin=*");
+        const data = await response.json();
 
-        // The API gives HTML inside data.parse.text["*"], we need to extract matches
+        // Extract plain text from HTML
         const html = data.parse.text["*"];
-
-        // Quick regex / DOM parsing example (can refine later)
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
-        const matchElements = doc.querySelectorAll("li, td"); // adjust based on Liquipedia structure
 
-        const parsedMatches = Array.from(matchElements)
-          .map(el => el.textContent.trim())
-          .filter(txt => txt.includes("vs")); // crude filter for matches
+        // Find match rows
+        const matchElements = doc.querySelectorAll(".match-card"); // Liquipedia uses these classes
+        const extractedMatches = [];
 
-        setMatches(parsedMatches);
-      } catch (err) {
-        setError(err.message);
+        matchElements.forEach(el => {
+          const teams = el.querySelectorAll(".team");
+          const time = el.querySelector(".timer-object")?.textContent || "TBD";
+
+          if (teams.length >= 2) {
+            extractedMatches.push({
+              team1: teams[0].textContent.trim(),
+              team2: teams[1].textContent.trim(),
+              time: time
+            });
+          }
+        });
+
+        setMatches(extractedMatches);
+      } catch (error) {
+        console.error("Error fetching matches:", error);
       } finally {
         setLoading(false);
       }
@@ -38,18 +44,20 @@ function App() {
   }, []);
 
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+    <div className="App">
       <h1>🔥 Valorant Matches (Liquipedia)</h1>
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      {matches.length > 0 ? (
+      {loading ? (
+        <p>Loading...</p>
+      ) : matches.length === 0 ? (
+        <p>No matches found</p>
+      ) : (
         <ul>
-          {matches.map((m, idx) => (
-            <li key={idx}>{m}</li>
+          {matches.map((match, index) => (
+            <li key={index}>
+              {match.team1} 🆚 {match.team2} — {match.time}
+            </li>
           ))}
         </ul>
-      ) : (
-        !loading && <p>No matches found.</p>
       )}
     </div>
   );
