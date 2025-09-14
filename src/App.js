@@ -1,63 +1,55 @@
 import React, { useEffect, useState } from "react";
 
 function App() {
-  const [upcoming, setUpcoming] = useState([]);
-  const [live, setLive] = useState([]);
+  const [matches, setMatches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch upcoming matches
   useEffect(() => {
-    fetch(
-      `https://api.pandascore.io/valorant/matches/upcoming?token=${process.env.REACT_APP_PANDASCORE_API_KEY}`
-    )
-      .then((res) => res.json())
-      .then((data) => setUpcoming(data))
-      .catch((err) => console.error(err));
-  }, []);
+    const fetchMatches = async () => {
+      try {
+        const res = await fetch(
+          "https://liquipedia.net/valorant/api.php?action=parse&page=Portal:Tournaments&format=json&origin=*"
+        );
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
 
-  // Fetch live matches
-  useEffect(() => {
-    fetch(
-      `https://api.pandascore.io/valorant/matches/running?token=${process.env.REACT_APP_PANDASCORE_API_KEY}`
-    )
-      .then((res) => res.json())
-      .then((data) => setLive(data))
-      .catch((err) => console.error(err));
+        // The API gives HTML inside data.parse.text["*"], we need to extract matches
+        const html = data.parse.text["*"];
+
+        // Quick regex / DOM parsing example (can refine later)
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        const matchElements = doc.querySelectorAll("li, td"); // adjust based on Liquipedia structure
+
+        const parsedMatches = Array.from(matchElements)
+          .map(el => el.textContent.trim())
+          .filter(txt => txt.includes("vs")); // crude filter for matches
+
+        setMatches(parsedMatches);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMatches();
   }, []);
 
   return (
-    <div style={{ fontFamily: "Arial", padding: "20px" }}>
-      <h1>🎮 Esports News & Scores</h1>
-
-      {/* Live Matches */}
-      <h2>🔥 Live Valorant Matches</h2>
-      {live.length === 0 ? (
-        <p>No live matches right now.</p>
-      ) : (
+    <div style={{ padding: "20px", fontFamily: "Arial" }}>
+      <h1>🔥 Valorant Matches (Liquipedia)</h1>
+      {loading && <p>Loading...</p>}
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      {matches.length > 0 ? (
         <ul>
-          {live.map((match) => (
-            <li key={match.id}>
-              {match.opponents[0]?.opponent?.name} vs{" "}
-              {match.opponents[1]?.opponent?.name} <br />
-              <b>Status:</b> {match.status}
-            </li>
+          {matches.map((m, idx) => (
+            <li key={idx}>{m}</li>
           ))}
         </ul>
-      )}
-
-      {/* Upcoming Matches */}
-      <h2>⏳ Upcoming Matches</h2>
-      {upcoming.length === 0 ? (
-        <p>No upcoming matches found.</p>
       ) : (
-        <ul>
-          {upcoming.map((match) => (
-            <li key={match.id}>
-              {match.opponents[0]?.opponent?.name} vs{" "}
-              {match.opponents[1]?.opponent?.name} <br />
-              <b>Start:</b> {new Date(match.begin_at).toLocaleString()}
-            </li>
-          ))}
-        </ul>
+        !loading && <p>No matches found.</p>
       )}
     </div>
   );
