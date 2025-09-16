@@ -27,7 +27,7 @@ function App() {
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>🔥 Valorant Matches (Liquipedia)</h1>
+      <h1>🔥 Puddingg dont get too hormyy </h1>
       {loading ? <p>Loading...</p> : null}
       <pre style={{ whiteSpace: "pre-wrap", textAlign: "left" }}>
         {rawHtml.slice(0, 2000)}...
