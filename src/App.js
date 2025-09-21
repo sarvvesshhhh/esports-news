@@ -1,39 +1,29 @@
-import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import Home from "./pages/Home";
+import Live from "./pages/Live";
+import Upcoming from "./pages/Upcoming";
+import Teams from "./pages/Teams";
+import Creators from "./pages/Creators";
 
 function App() {
-  const [rawHtml, setRawHtml] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        const response = await fetch(
-  "https://corsproxy.io/?https://liquipedia.net/api.php?action=parse&page=Liquipedia:Upcoming_and_ongoing_matches&format=json"
-);
-        const data = await response.json();
-
-        const html = data?.parse?.text?.["*"];
-        setRawHtml(html || "No HTML received");
-      } catch (err) {
-        console.error("Error fetching Liquipedia matches:", err);
-        setRawHtml("Error fetching data");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMatches();
-  }, []);
-
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>🔥 Puddingg dont get too hormyy </h1>
-      {loading ? <p>Loading...</p> : null}
-      <pre style={{ whiteSpace: "pre-wrap", textAlign: "left" }}>
-        {rawHtml.slice(0, 2000)}...
-      </pre>
-      <p>(showing first 2000 chars of HTML)</p>
-    </div>
+    <Router>
+      <nav className="bg-black text-white px-6 py-3 flex gap-6">
+        <Link to="/">🏠 Home</Link>
+        <Link to="/live">🔴 Live</Link>
+        <Link to="/upcoming">📅 Upcoming</Link>
+        <Link to="/teams">👥 Teams</Link>
+        <Link to="/creators">🎥 Creators</Link>
+      </nav>
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/live" element={<Live />} />
+        <Route path="/upcoming" element={<Upcoming />} />
+        <Route path="/teams" element={<Teams />} />
+        <Route path="/creators" element={<Creators />} />
+      </Routes>
+    </Router>
   );
 }
 
